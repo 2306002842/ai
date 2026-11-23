@@ -1,0 +1,27 @@
+{% extends "app01/base.html" %}
+
+{% block title %}{{ title }} - 企业员工管理系统{% endblock %}
+
+{% block content %}
+<div class="panel panel-default" style="max-width: 720px;">
+    <div class="panel-heading">{{ title }}</div>
+    <div class="panel-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            <div class="form-group {% if form.title.errors %}has-error{% endif %}">
+                <label>角色名称</label>
+                {{ form.title }}
+                {% for error in form.title.errors %}
+                    <span class="help-block">{{ error }}</span>
+                {% endfor %}
+            </div>
+            <div class="form-group">
+                <label>权限</label>
+                {{ form.permissions }}
+            </div>
+            <button type="submit" class="btn btn-primary">保 存</button>
+            <a class="btn btn-default" href="/rbac/role/list/">取消</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

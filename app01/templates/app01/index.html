@@ -1,0 +1,80 @@
+{% extends "app01/base.html" %}
+
+{% block title %}工作台 - 企业员工管理系统{% endblock %}
+
+{% block content %}
+<h4>欢迎回来，{{ request.user.username }}！</h4>
+
+<div class="row stat-row">
+    <div class="col-md-3">
+        <div class="panel panel-primary stat-card">
+            <div class="panel-body">
+                <div class="stat-num">{{ emp_count }}</div>
+                <div class="stat-label">在职员工</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="panel panel-success stat-card">
+            <div class="panel-body">
+                <div class="stat-num">{{ dept_count }}</div>
+                <div class="stat-label">部门数量</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="panel panel-info stat-card">
+            <div class="panel-body">
+                <div class="stat-num">{{ attendance_count }}</div>
+                <div class="stat-label">考勤记录</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="panel panel-warning stat-card">
+            <div class="panel-body">
+                <div class="stat-num">{{ task_count }}</div>
+                <div class="stat-label">待办任务</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="panel panel-default">
+            <div class="panel-heading">最新公告</div>
+            <div class="panel-body">
+                <ul class="list-unstyled notice-list">
+                    {% for notice in notices %}
+                        <li>
+                            {% if notice.is_pinned %}<span class="label label-danger">置顶</span>{% endif %}
+                            <a href="{% url 'notice_detail' notice.id %}">{{ notice.title }}</a>
+                            <span class="text-muted pull-right">{{ notice.publish_date|date:"m-d" }}</span>
+                        </li>
+                    {% empty %}
+                        <li class="text-muted">暂无公告</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="panel panel-default">
+            <div class="panel-heading">最新任务</div>
+            <div class="panel-body">
+                <ul class="list-unstyled notice-list">
+                    {% for task in tasks %}
+                        <li>
+                            <a href="/task/list/">{{ task.title }}</a>
+                            <span class="text-muted pull-right">{{ task.get_level_display }}优先级</span>
+                        </li>
+                    {% empty %}
+                        <li class="text-muted">暂无任务</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,10 @@
+"""app01 应用配置。"""
+from django.apps import AppConfig
+
+
+class App01Config(AppConfig):
+    """应用基础配置。"""
+
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "app01"
+    verbose_name = "员工管理"

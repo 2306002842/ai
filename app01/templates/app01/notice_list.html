@@ -1,0 +1,88 @@
+﻿{% extends "app01/base.html" %}
+{% load hrms_perms %}
+
+{% block title %}公告管理 - 企业员工管理系统{% endblock %}
+
+{% block content %}
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <div class="row">
+            <div class="col-md-8">
+                <form class="form-inline" method="get">
+                    <div class="form-group">
+                        <input type="text" class="form-control" name="query" placeholder="按标题搜索"
+                               value="{{ query }}">
+                    </div>
+                    <button class="btn btn-primary btn-sm">查询</button>
+                    {% if query %}
+                        <a href="/notice/list/" class="btn btn-default btn-sm">重置</a>
+                    {% endif %}
+                </form>
+            </div>
+            <div class="col-md-4 text-right">
+                {% if request|has_perm:"notice:add" %}
+                    <a href="/notice/add/" class="btn btn-primary btn-sm">
+                        <span class="glyphicon glyphicon-plus"></span> 发布公告
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <table class="table table-striped table-hover">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>标题</th>
+            <th>发布人</th>
+            <th>发布时间</th>
+            <th>置顶</th>
+            <th class="text-right">操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for obj in page_objs %}
+            <tr>
+                <td>{{ obj.id }}</td>
+                <td>
+                    <a href="{% url 'notice_detail' obj.id %}">{{ obj.title }}</a>
+                </td>
+                <td>{{ obj.publisher.username|default:"-" }}</td>
+                <td>{{ obj.publish_date|date:"Y-m-d H:i" }}</td>
+                <td>
+                    {% if obj.is_pinned %}
+                        <span class="label label-danger">置顶</span>
+                    {% else %}
+                        <span class="text-muted">否</span>
+                    {% endif %}
+                </td>
+                <td class="text-right">
+                    {% if request|has_perm:"notice:pin" %}
+                        <form class="inline-form" method="post" action="/notice/pin/{{ obj.id }}/"
+                              onsubmit="return confirm('{% if obj.is_pinned %}确定取消置顶吗？{% else %}确定置顶该公告吗？{% endif %}')">
+                            {% csrf_token %}
+                            <button class="btn btn-info btn-xs">{% if obj.is_pinned %}取消置顶{% else %}置顶{% endif %}</button>
+                        </form>
+                    {% endif %}
+                    {% if request|has_perm:"notice:edit" %}
+                        <a class="btn btn-warning btn-xs" href="/notice/edit/{{ obj.id }}/">编辑</a>
+                    {% endif %}
+                    {% if request|has_perm:"notice:delete" %}
+                        <form class="inline-form" method="post" onsubmit="return confirm('确定删除该公告吗？')">
+                            {% csrf_token %}
+                            <button class="btn btn-danger btn-xs">删除</button>
+                        </form>
+                    {% endif %}
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="6" class="text-center text-muted">暂无数据</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="panel-footer">
+        {{ pager.html|safe }}
+    </div>
+</div>
+{% endblock %}

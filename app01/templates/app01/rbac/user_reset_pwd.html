@@ -1,0 +1,23 @@
+{% extends "app01/base.html" %}
+
+{% block title %}重置密码 - 企业员工管理系统{% endblock %}
+
+{% block content %}
+<div class="panel panel-default" style="max-width: 480px;">
+    <div class="panel-heading">为用户【{{ user_obj.username }}】重置密码</div>
+    <div class="panel-body">
+        {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+        <form method="post" novalidate>
+            {% csrf_token %}
+            <div class="form-group">
+                <label>{{ form.password.label }}</label>
+                {{ form.password }}
+            </div>
+            <button type="submit" class="btn btn-primary">确 定</button>
+            <a class="btn btn-default" href="/rbac/user/list/">取消</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

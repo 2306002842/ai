@@ -1,0 +1,25 @@
+{% extends "app01/base.html" %}
+{% load hrms_perms %}
+
+{% block title %}公告详情 - 企业员工管理系统{% endblock %}
+
+{% block content %}
+<div class="panel panel-default">
+    <div class="panel-heading">
+        {% if obj.is_pinned %}<span class="label label-danger">置顶</span>{% endif %}
+        {{ obj.title }}
+    </div>
+    <div class="panel-body">
+        <p class="text-muted">
+            发布人：{{ obj.publisher.username|default:"-" }} ｜ 发布时间：{{ obj.publish_date|date:"Y-m-d H:i" }}
+        </p>
+        <div class="notice-content">{{ obj.content|linebreaksbr }}</div>
+    </div>
+    <div class="panel-footer">
+        <a href="/notice/list/" class="btn btn-default btn-sm">返回列表</a>
+        {% if request|has_perm:"notice:edit" %}
+            <a href="/notice/edit/{{ obj.id }}/" class="btn btn-warning btn-sm">编辑</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

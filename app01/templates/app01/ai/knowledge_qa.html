@@ -1,0 +1,58 @@
+{% extends 'app01/base.html' %}
+{% block title %}AI 制度知识库问答{% endblock %}
+{% block content %}
+<h3>📚 T3 · 制度知识库问答</h3>
+<p style="color:#6b7280">SQL 关键词检索 + 上下文注入。资料里没有就说"不知道"。</p>
+
+<div class="panel panel-default">
+  <div class="panel-heading">📋 预置知识库（{{ knowledges|length }} 条）</div>
+  <div class="panel-body" style="max-height:180px;overflow:auto;font-size:13px">
+    {% for k in knowledges %}
+      <span class="label label-info">{{ k.category }}</span> <b>{{ k.title }}</b> — {{ k.content|truncatechars:60 }}<br>
+    {% empty %}
+      <span style="color:#dc2626">⚠️ 知识库为空，请先迁移并初始化。</span>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="row" style="margin-bottom:12px">
+  <div class="col-md-8">
+    <input id="q" type="text" class="form-control" placeholder="例如：每月几号发工资？">
+  </div>
+  <div class="col-md-4">
+    <button id="btn" class="btn btn-success btn-block">🔎 提问</button>
+  </div>
+</div>
+
+<div id="result" class="panel panel-default" style="display:none">
+  <div class="panel-heading"><b>🤖 回答</b></div>
+  <div class="panel-body" id="result-body" style="white-space:pre-wrap;font-size:13px;line-height:1.7"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const $ = id => document.getElementById(id);
+$('#btn').onclick = async () => {
+  const q = $('#q').value.trim();
+  if (!q) { alert('请输入问题'); return; }
+  const btn = $('#btn'); btn.disabled = true; btn.textContent = '检索中...';
+  const box = $('#result'); const body = $('#result-body');
+  box.style.display = 'block'; body.textContent = '🔍 检索知识库 + 调用模型...';
+  try {
+    const fd = new FormData(); fd.append('question', q);
+    const r = await fetch('/api/ai/knowledge-qa/', { method: 'POST', body: fd });
+    const data = await r.json();
+    if (data.ok) {
+      let html = '🤖 ' + data.answer;
+      if (data.sources && data.sources.length) {
+        html += '\n\n📎 参考来源：' + data.sources.map(s => '[' + s.category + '] ' + s.title).join('，');
+      }
+      body.textContent = html;
+    } else { body.textContent = '❌ ' + data.msg; }
+  } catch(e) { body.textContent = '❌ 请求失败: ' + e.message; }
+  btn.disabled = false; btn.textContent = '🔎 提问';
+};
+$('#q').onkeydown = e => { if (e.key === 'Enter') $('#btn').onclick(); };
+</script>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends 'app01/base.html' %}
+{% block title %}AI 多轮对话{% endblock %}
+{% block content %}
+<h3>💬 T5+T7 · 多轮对话助手 <span class="label label-primary">流式</span></h3>
+<p style="color:#6b7280">维护会话历史，支持连续追问。开启流式后逐字输出。</p>
+
+<div id="chat-box" style="height:480px;overflow-y:auto;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:12px;margin-bottom:12px"></div>
+
+<div class="row">
+  <div class="col-md-8">
+    <textarea id="input" class="form-control" style="min-height:60px" placeholder="输入消息，Ctrl+Enter 发送..."></textarea>
+  </div>
+  <div class="col-md-4" style="display:flex;flex-direction:column;gap:8px">
+    <button id="send" class="btn btn-primary">🚀 发送</button>
+    <button id="clear" class="btn btn-default">🧹 新会话</button>
+  </div>
+</div>
+<label style="font-size:12px;color:#6b7280;margin-top:8px">
+  <input type="checkbox" id="stream" checked> 启用流式输出（T7 SSE 逐字显示）
+</label>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const $ = id => document.getElementById(id);
+const chat = $('chat-box'), input = $('input'), sendBtn = $('send');
+let sessionId = document.cookie.match(/chat_session=([^;]+)/)?.[1] || null;
+
+function addMsg(role, text) {
+  const div = document.createElement('div');
+  div.style.marginBottom = '10px';
+  div.innerHTML = '<b>' + (role === 'user' ? '🧑 我' : '🤖 AI') + ':</b> <span></span>';
+  div.querySelector('span').textContent = text;
+  chat.appendChild(div); chat.scrollTop = chat.scrollHeight;
+  return div.querySelector('span');
+}
+
+function setCookie(n, v, d=7) { document.cookie = n + '=' + v + ';max-age=' + (d*86400) + ';path=/'; }
+
+async function doSend() {
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  addMsg('user', text);
+  sendBtn.disabled = true;
+
+  if ($('stream').checked) {
+    const bubble = addMsg('ai', '');
+    const resp = await fetch('/api/ai/chat/stream/', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ session_id: sessionId, message: text }),
+    });
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '', full = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      let idx;
+      while ((idx = buf.indexOf('\n\n')) !== -1) {
+        const chunk = buf.slice(0, idx); buf = buf.slice(idx + 2);
+        for (const line of chunk.split('\n')) {
+          if (line.startsWith('data:')) {
+            try {
+              const obj = JSON.parse(line.slice(5).trim());
+              if (obj.done) { setCookie('chat_session', obj.session_id || sessionId); }
+              else if (obj.text) { full += obj.text; bubble.textContent = full; chat.scrollTop = chat.scrollHeight; }
+            } catch(e) {}
+          }
+        }
+      }
+    }
+  } else {
+    const bubble = addMsg('ai', '...');
+    const resp = await fetch('/api/ai/chat/', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ session_id: sessionId, message: text }),
+    });
+    const data = await resp.json();
+    if (data.ok) { bubble.textContent = data.reply; sessionId = data.session_id; setCookie('chat_session', sessionId); }
+    else { bubble.textContent = '❌ ' + data.msg; }
+  }
+  sendBtn.disabled = false;
+}
+
+sendBtn.onclick = doSend;
+input.onkeydown = e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') doSend(); };
+$('clear').onclick = () => { sessionId = null; setCookie('chat_session', '', -1); chat.innerHTML = ''; };
+</script>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "app01/base.html" %}
+
+{% block title %}我的档案 - 企业员工管理系统{% endblock %}
+
+{% block content %}
+<div class="panel panel-default" style="max-width: 640px;">
+    <div class="panel-heading">我的档案</div>
+    <div class="panel-body">
+        {% if employee %}
+            <div class="media">
+                <div class="media-left">
+                    {% if employee.avatar %}
+                        <img src="{{ employee.avatar.url }}" class="avatar-lg" alt="{{ employee.name }}">
+                    {% else %}
+                        <span class="glyphicon glyphicon-user avatar-icon avatar-icon-lg"></span>
+                    {% endif %}
+                </div>
+                <div class="media-body">
+                    <h4 style="margin-top: 0;">{{ employee.name }}
+                        <small class="text-muted">{{ employee.get_gender_display }} / {{ employee.age }} 岁</small>
+                    </h4>
+                    <p class="text-muted" style="margin-bottom: 4px;">
+                        所属部门：{{ employee.depart.title|default:"-" }} ｜ 入职时间：{{ employee.entry_date|date:"Y-m-d" }}
+                    </p>
+                    <p class="text-muted" style="margin-bottom: 0;">
+                        手机号：{{ employee.phone }} ｜ 账户余额：{{ employee.balance }} 元
+                    </p>
+                </div>
+            </div>
+        {% else %}
+            <p class="text-muted">当前账号尚未关联员工档案，请联系管理员。</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

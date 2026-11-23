@@ -1,0 +1,129 @@
+/* 全局样式：企业员工管理系统 */
+body {
+    background-color: #f5f6f8;
+    font-family: "Helvetica Neue", "Microsoft YaHei", Arial, sans-serif;
+}
+
+/* 顶部导航 */
+.app-navbar {
+    margin-bottom: 0;
+}
+
+/* 布局：左侧菜单 + 内容区 */
+.app-body {
+    margin-top: 51px;
+    padding: 0;
+}
+
+.app-sidebar {
+    min-height: calc(100vh - 51px);
+    background: #2f3237;
+    padding: 12px 0;
+    overflow-y: auto;
+}
+
+.app-sidebar .nav-pills li a {
+    color: #c8ccd2;
+    padding: 9px 20px;
+    border-radius: 0;
+}
+
+.app-sidebar .nav-pills li a:hover {
+    color: #fff;
+    background: #3a3e45;
+}
+
+.app-sidebar .nav-pills li.active a {
+    color: #fff;
+    background: #337ab7;
+}
+
+.app-sidebar .sidebar-title {
+    color: #6f7680;
+    font-size: 12px;
+    padding: 14px 20px 4px;
+}
+
+.app-content {
+    padding: 18px;
+    min-height: calc(100vh - 51px);
+}
+
+/* 列表内联小表单（删除按钮等） */
+.inline-form {
+    display: inline-block;
+    margin-left: 4px;
+}
+
+/* 头像缩略图 */
+.avatar-sm {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.avatar-icon {
+    font-size: 30px;
+    color: #b9bec6;
+    vertical-align: middle;
+}
+
+.avatar-icon-lg {
+    font-size: 64px;
+}
+
+.avatar-lg {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* 首页统计卡片 */
+.stat-card {
+    text-align: center;
+    color: #fff;
+}
+
+.stat-num {
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.stat-label {
+    font-size: 13px;
+    opacity: 0.9;
+}
+
+/* 登录页 */
+.login-page {
+    background: linear-gradient(135deg, #337ab7 0%, #2f3237 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.login-box {
+    width: 360px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+}
+
+.captcha-img {
+    height: 34px;
+    width: 100%;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* 公告列表 */
+.notice-list li {
+    padding: 6px 0;
+    border-bottom: 1px dashed #eee;
+}
+
+.notice-content {
+    line-height: 1.8;
+}

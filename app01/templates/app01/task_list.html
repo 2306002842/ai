@@ -1,0 +1,214 @@
+﻿{% extends "app01/base.html" %}
+{% load hrms_perms %}
+
+{% block title %}任务管理 - 企业员工管理系统{% endblock %}
+
+{% block content %}
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <div class="row">
+            <div class="col-md-8">
+                <form class="form-inline" method="get">
+                    <div class="form-group">
+                        <select class="form-control" name="level">
+                            <option value="">全部级别</option>
+                            {% for value, label in level_choices %}
+                                <option value="{{ value }}" {% if level == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button class="btn btn-primary btn-sm">查询</button>
+                    {% if level %}
+                        <a href="/task/list/" class="btn btn-default btn-sm">重置</a>
+                    {% endif %}
+                </form>
+            </div>
+            <div class="col-md-4 text-right">
+                {% if request|has_perm:"task:add" %}
+                    <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#taskModal"
+                            data-mode="add">
+                        <span class="glyphicon glyphicon-plus"></span> 新增任务
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <table class="table table-striped table-hover">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>级别</th>
+            <th>标题</th>
+            <th>详情</th>
+            <th>负责人</th>
+            <th class="text-right">操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for obj in page_objs %}
+            <tr>
+                <td>{{ obj.id }}</td>
+                <td>
+                    {% if obj.level == 'high' %}
+                        <span class="label label-danger">{{ obj.get_level_display }}</span>
+                    {% elif obj.level == 'medium' %}
+                        <span class="label label-warning">{{ obj.get_level_display }}</span>
+                    {% else %}
+                        <span class="label label-default">{{ obj.get_level_display }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ obj.title }}</td>
+                <td>{{ obj.detail|truncatechars:40|default:"-" }}</td>
+                <td>{{ obj.owner.name|default:"-" }}</td>
+                <td class="text-right">
+                    {% if request|has_perm:"task:edit" %}
+                        <button class="btn btn-warning btn-xs btn-task-edit"
+                                data-mode="edit"
+                                data-url="/task/edit/{{ obj.id }}/"
+                                data-id="{{ obj.id }}"
+                                data-level="{{ obj.level }}"
+                                data-title="{{ obj.title }}"
+                                data-detail="{{ obj.detail }}"
+                                data-owner="{{ obj.owner_id|default:'' }}"
+                                data-toggle="modal" data-target="#taskModal">编辑</button>
+                    {% endif %}
+                    {% if request|has_perm:"task:delete" %}
+                        <button class="btn btn-danger btn-xs btn-task-delete" data-url="/task/delete/{{ obj.id }}/">删除</button>
+                    {% endif %}
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="6" class="text-center text-muted">暂无数据</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="panel-footer">
+        {{ pager.html|safe }}
+    </div>
+</div>
+
+{# 新增 / 编辑任务弹窗：AJAX 提交，不刷新页面 #}
+{% if request|has_perm:"task:add" or request|has_perm:"task:edit" %}
+    <div class="modal fade" id="taskModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title" id="taskModalTitle">新增任务</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger hidden" id="taskFormError"></div>
+                    <form id="taskForm">
+                        <div class="form-group">
+                            <label>级别</label>
+                            <select class="form-control" name="level" id="taskFieldLevel">
+                                {% for value, label in level_choices %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group" id="taskGroupTitle">
+                            <label>标题</label>
+                            <input type="text" class="form-control" name="title" id="taskFieldTitle" placeholder="任务标题">
+                            <span class="help-block field-error" data-field="title"></span>
+                        </div>
+                        <div class="form-group" id="taskGroupDetail">
+                            <label>详情</label>
+                            <textarea class="form-control" name="detail" id="taskFieldDetail" rows="4"></textarea>
+                            <span class="help-block field-error" data-field="detail"></span>
+                        </div>
+                        <div class="form-group" id="taskGroupOwner">
+                            <label>负责人</label>
+                            <select class="form-control" name="owner" id="taskFieldOwner">
+                                <option value="">请选择负责人</option>
+                                {% for emp in employees %}
+                                    <option value="{{ emp.id }}">{{ emp.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <span class="help-block field-error" data-field="owner"></span>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="taskSubmitBtn">提 交</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 弹窗打开时：区分新增/编辑，回填数据，清空旧错误
+    $('#taskModal').on('show.bs.modal', function (event) {
+        var btn = event.relatedTarget;
+        var mode = $(btn).data('mode');
+        var $modal = $(this);
+        $modal.removeData('editUrl');
+        $modal.find('.field-error').text('');
+        $modal.find('#taskFormError').addClass('hidden');
+
+        if (mode === 'edit') {
+            $modal.data('editUrl', $(btn).data('url'));
+            $('#taskModalTitle').text('编辑任务');
+            $('#taskFieldLevel').val($(btn).data('level'));
+            $('#taskFieldTitle').val($(btn).data('title'));
+            $('#taskFieldDetail').val($(btn).data('detail'));
+            $('#taskFieldOwner').val($(btn).data('owner'));
+        } else {
+            $('#taskModalTitle').text('新增任务');
+            $('#taskForm')[0].reset();
+        }
+    });
+
+    // AJAX 提交（新增 / 编辑共用），错误回显且不刷新页面
+    $('#taskSubmitBtn').on('click', function () {
+        var $modal = $('#taskModal');
+        var editUrl = $modal.data('editUrl');
+        var url = editUrl || '/task/add/';
+        var $btn = $(this).prop('disabled', true);
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: $('#taskForm').serialize(),
+            success: function (res) {
+                if (res.status) {
+                    $('#taskModal').modal('hide');
+                    location.reload();
+                } else if (res.errors) {
+                    // 逐字段回显校验错误
+                    $modal.find('.field-error').text('');
+                    $modal.find('.form-group').removeClass('has-error');
+                    $.each(res.errors, function (field, msgs) {
+                        $modal.find('.field-error[data-field="' + field + '"]').text(msgs.join('；'));
+                        $modal.find('.field-error[data-field="' + field + '"]')
+                            .closest('.form-group').addClass('has-error');
+                    });
+                } else if (res.msg) {
+                    $modal.find('#taskFormError').removeClass('hidden').text(res.msg);
+                }
+            },
+            error: function () {
+                $modal.find('#taskFormError').removeClass('hidden').text('请求失败，请稍后重试');
+            },
+            complete: function () {
+                $btn.prop('disabled', false);
+            }
+        });
+    });
+
+    // AJAX 删除
+    $(document).on('click', '.btn-task-delete', function () {
+        if (!confirm('确定删除该任务吗？')) return;
+        var $btn = $(this).prop('disabled', true);
+        $.post($btn.data('url'))
+            .done(function () { location.reload(); })
+            .fail(function () { alert('删除失败，请稍后重试'); $btn.prop('disabled', false); });
+    });
+</script>
+{% endblock %}
